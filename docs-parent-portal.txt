@@ -1,0 +1,12 @@
+PORTAIL PARENT — SN PROSCHOOL
+
+Accès depuis l'écran de connexion : « Accéder au portail parent ».
+Informations demandées : matricule de l'élève + téléphone du parent/tuteur enregistré dans la fiche de l'élève.
+Données visibles : identité et classe, notes, coefficients et périodes, présences/absences/retards, paiements validés et références des reçus.
+
+MATRCULE : attribué automatiquement à l'inscription, format SN-AAAA-NNNN.
+
+SUPABASE : appliquer supabase/migrations/20261030_parent_portal_matricule.sql après le schéma principal.
+MODE APERÇU : les données proviennent du navigateur local.
+
+ATTENTION : pour l'exploitation réelle avec des données de mineurs, compléter par un compte parent ou un OTP sur téléphone vérifié, une limitation des tentatives et des tests RLS. Matricule + téléphone seul n'est pas une authentification forte.
