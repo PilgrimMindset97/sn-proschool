@@ -1,0 +1,13 @@
+{
+  "projectId": "72558484",
+  "functions": {
+    "create-staff-account": {
+      "hasChanged": false,
+      "hash": "0a0bcc380f670751b3ef25646438b027f0527b2d149aa0953423a8f28c8ecbf0"
+    },
+    "manage-staff-account": {
+      "hasChanged": false,
+      "hash": "03c795dcc1092156f8135c686dc27f1a8c2a7c17c097d6ec5606a003f15becab"
+    }
+  }
+}

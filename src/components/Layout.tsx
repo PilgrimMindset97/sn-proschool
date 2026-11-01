@@ -42,7 +42,7 @@ export default function Layout({ activePage, onPageChange, children }: LayoutPro
   const { profile, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const role = profile?.role || 'parent';
+  const role: AppRole = (profile?.role || 'parent') as AppRole;
   const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(role));
   const activeItem = visibleItems.find((item) => item.key === activePage) || visibleItems[0];
 
