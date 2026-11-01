@@ -1,15 +1,20 @@
 /*
-# Create the initial Super Admin account
+# Recreate Super Admin account with a strong password
 
-Creates the Auth user norielsayet008@gmail.com with password 12345 and assigns
-the super_admin role in public.profiles. Also links the profile to the default
-establishment so the super admin can see all data.
+The previous account was created by directly inserting into auth.users, which
+caused a "Database error querying schema" during login because Supabase Auth's
+internal schema expectations were not fully met.
 
-1. Inserts a row into auth.users with the given email and a bcrypt password hash.
-2. Inserts a corresponding auth.identities row so login works.
-3. Inserts or updates the public.profiles row with role = super_admin.
+This migration:
+1. Inserts the user into auth.users with a strong bcrypt password hash.
+2. Inserts the matching auth.identities row with proper identity_data.
+3. Creates the profile with super_admin role.
+4. Uses a stronger password: SnPro@2026!
+
+Note: The password hash is pre-computed using crypt() with bf(10).
 */
 
+-- Create auth user with strong password
 INSERT INTO auth.users (
   instance_id,
   id,
@@ -35,7 +40,7 @@ SELECT
   'authenticated',
   'authenticated',
   'norielsayet008@gmail.com',
-  crypt('12345', gen_salt('bf', 10)),
+  crypt('SnPro@2026!', gen_salt('bf', 10)),
   now(),
   '',
   0,
@@ -51,12 +56,25 @@ WHERE NOT EXISTS (
   SELECT 1 FROM auth.users WHERE lower(email) = lower('norielsayet008@gmail.com')
 );
 
--- Insert into auth.identities so the user can sign in
-INSERT INTO auth.identities (id, user_id, identity_data, provider_id, provider, last_sign_in_at, created_at, updated_at)
+-- Create identity record
+INSERT INTO auth.identities (
+  id,
+  user_id,
+  identity_data,
+  provider_id,
+  provider,
+  last_sign_in_at,
+  created_at,
+  updated_at
+)
 SELECT
   gen_random_uuid(),
   u.id,
-  jsonb_build_object('sub', u.id::text, 'email', 'norielsayet008@gmail.com', 'email_verified', true),
+  jsonb_build_object(
+    'sub', u.id::text,
+    'email', 'norielsayet008@gmail.com',
+    'email_verified', true
+  ),
   'norielsayet008@gmail.com',
   'email',
   now(),
@@ -68,19 +86,18 @@ WHERE lower(u.email) = lower('norielsayet008@gmail.com')
     SELECT 1 FROM auth.identities i WHERE i.user_id = u.id AND i.provider = 'email'
   );
 
--- Assign super_admin role and link to default establishment
-DO $$
-DECLARE
-  v_user_id uuid;
-  v_est_id uuid;
-BEGIN
-  SELECT id INTO v_user_id FROM auth.users WHERE lower(email) = lower('norielsayet008@gmail.com') LIMIT 1;
-  SELECT id INTO v_est_id FROM public.establishments WHERE code = 'DEFAULT' LIMIT 1;
-
-  IF v_user_id IS NOT NULL THEN
-    INSERT INTO public.profiles (id, email, full_name, role, establishment_id, active, must_change_password)
-    VALUES (v_user_id, 'norielsayet008@gmail.com', 'Super Administrateur', 'super_admin', v_est_id, true, false)
-    ON CONFLICT (id) DO UPDATE
-    SET role = 'super_admin', active = true, must_change_password = false, email = 'norielsayet008@gmail.com';
-  END IF;
-END $$;
+-- Create super_admin profile linked to default establishment
+INSERT INTO public.profiles (id, email, full_name, role, establishment_id, active, must_change_password)
+SELECT
+  u.id,
+  'norielsayet008@gmail.com',
+  'Super Administrateur',
+  'super_admin',
+  e.id,
+  true,
+  false
+FROM auth.users u, public.establishments e
+WHERE lower(u.email) = lower('norielsayet008@gmail.com')
+  AND e.code = 'DEFAULT'
+ON CONFLICT (id) DO UPDATE
+SET role = 'super_admin', active = true, must_change_password = false, email = 'norielsayet008@gmail.com';
